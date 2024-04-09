@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./SGD/Code Files"
+        "./SGD/Code Files",
+        "./PyTorch Solver/Code Files"
     ]
 }
