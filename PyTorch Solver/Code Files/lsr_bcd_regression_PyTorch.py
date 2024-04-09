@@ -16,6 +16,7 @@ class CostFunction(nn.Module):
     #Evaluate the Cost Function given x
     def evaluate(self, X_tilde, y_tilde):
         mse_loss = nn.MSELoss(reduction = 'sum')
+        print(f"Predicted: {self.linear(X_tilde)}, Actual: {y_tilde}")
         return mse_loss(self.linear(X_tilde), y_tilde) + self.l2_regularization()
             
     #Calculate value of lambda * ||w||^2_2
@@ -26,15 +27,16 @@ class CostFunction(nn.Module):
         return self.lambda1 * l2_reg
 
 def pytorch_subroutine(X_tilde: np.ndarray, y_tilde: np.ndarray, lambda1, bias = False):
+    y_tilde = y_tilde.reshape(-1, 1)
     X_tilde_tensor = torch.tensor(X_tilde, dtype = torch.float32)
     y_tilde_tensor = torch.tensor(y_tilde, dtype = torch.float32)
     
     #Initialize Cost Function and the SGD Optimizer
     cost_function = CostFunction(X_tilde.shape[1], lambda1)
-    optimizer = optim.SGD(cost_function.parameters(), lr=0.01)
+    optimizer = optim.SGD(cost_function.parameters(), lr=0.0001)
     
-    #For now, set batch size to 32 and number of epochs to 10
-    batch_size = 32
+    #For now, set batch size to 256 and number of epochs to 10
+    batch_size = 256
     num_epochs = 10
     
     #Training Loop
@@ -141,6 +143,9 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         #Get Original and Updated Core Tensor
         Gk = lsr_ten.get_core_matrix()
         Gk1, b = pytorch_subroutine(X_tilde, y_tilde, lambda1, intercept)
+        
+        #Reshape Gk1
+        Gk1 = np.reshape(Gk1, ranks, order = 'F')
 
         #Update Residuals and store updated Core Tensor
         core_residual = np.linalg.norm(Gk1 - Gk)
