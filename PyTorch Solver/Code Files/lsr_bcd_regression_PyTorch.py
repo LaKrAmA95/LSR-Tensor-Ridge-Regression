@@ -15,7 +15,8 @@ class CostFunction(nn.Module):
         
     #Evaluate the Cost Function given x
     def evaluate(self, X_tilde, y_tilde):
-        return nn.MSELoss(self.linear(X_tilde), y_tilde, reduction = 'sum') + self.l2_regularization()
+        mse_loss = nn.MSELoss()
+        return mse_loss(self.linear(X_tilde), y_tilde, reduction = 'sum') + self.l2_regularization()
             
     #Calculate value of lambda * ||w||^2_2
     def l2_regularization(self):
