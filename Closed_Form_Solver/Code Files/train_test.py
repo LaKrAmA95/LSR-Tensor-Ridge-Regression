@@ -70,4 +70,4 @@ def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, B_tensored: np.ndarra
     print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}")
 
     #Return Test Results
-    return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score
+    return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted

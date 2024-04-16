@@ -128,7 +128,7 @@ def KFoldCV_Vectorized(X_train, Y_train, B_tensored: np.ndarray, alphas, k_folds
             objective_function_values[fold, index1] = validation_objective_function_value
 
             #Print Results
-            print(f"Fold = {fold}, Alpha = {alpha1}, NEE: {validation_normalized_estimation_error}, NMSE: {validation_nmse_loss}, Correlation: {validation_correlation}, R^2 Score: {validation_R2_score}, Objective Function Value: {validation_objective_function_value}")
+            print(f"Fold = {fold}, Alpha = {alpha1}, NEE: {validation_normalized_estimation_error}, NMSE: {validation_nmse_loss}, Correlation: {validation_correlation}, R^2 Score: {validation_R2_score},Objective Function Value: {validation_objective_function_value}")
 
     #Average out validation results
     average_validation_normalized_estimation_errors = np.mean(validation_normalized_estimation_errors, axis = 0)
