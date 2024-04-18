@@ -24,7 +24,7 @@ def TrainTest(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_te
   test_R2_score = r2.compute()
 
   #Print Test Results
-  print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}")
+  print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, Intercept: {b}")
 
   #Return Test Results
-  return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score
+  return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score, Y_test_predicted
