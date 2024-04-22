@@ -16,10 +16,10 @@ def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_t
   #Construct LSR Tensor
   lsr_tensor = LSR_tensor_dot(shape = LSR_tensor_dot_shape, ranks = ranks, separation_rank = separation_rank )
   lsr_tensor, objective_function_values = lsr_bcd_regression(lsr_tensor, X_train, Y_train, hypers)
-  expanded_lsr = lsr_tensor.expand_to_tensor()
+  expanded_lsr = lsr_tensor.expand_to_tensor().detach().cpu().numpy()
   expanded_lsr = np.reshape(expanded_lsr, X_train[0].shape, order = 'F')
 
-  Y_test_predicted = inner_product(np.transpose(X_test, (0, 2, 1)), expanded_lsr.flatten(order ='F')) + lsr_tensor.b + Y_train_mean
+  Y_test_predicted = inner_product(np.transpose(X_test, (0, 2, 1)), expanded_lsr.flatten(order ='F')) + Y_train_mean #+ lsr_tensor.b 
 
 
   print(f"Y_test_predicted: {Y_test_predicted.flatten()}, Y_test: {Y_test.flatten()}")

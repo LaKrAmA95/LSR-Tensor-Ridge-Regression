@@ -24,7 +24,7 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray, B_tensored: np.ndarray, al
   lsr_tensors = [ [LSR_tensor_dot(shape = LSR_tensor_dot_shape, ranks = ranks, separation_rank = separation_rank) for fold_idx in range(k_folds)] for idx in range(len(alphas))]
 
   #Store objective function values for each fold/alpha
-  objective_function_information = np.ones(shape = (k_folds, len(alphas), hypers['max_iter'], separation_rank, len(ranks) + 1))
+  objective_function_information = np.ones(shape = (k_folds, len(alphas), separation_rank, len(ranks) + 1,hypers['max_iter']))
 
   #Go thru each fold
   for fold, (train_ids, validation_ids) in enumerate(kfold.split(X_train)):
@@ -35,7 +35,7 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray, B_tensored: np.ndarray, al
       hypers['weight_decay'] = alpha1
 
       lsr_ten, objective_function_values = lsr_bcd_regression(lsr_tensors[index1][fold], X_train_updated, Y_train_updated, hypers)
-      expanded_lsr = lsr_ten.expand_to_tensor()
+      expanded_lsr = lsr_ten.expand_to_tensor().detach().cpu().numpy()
       expanded_lsr = np.reshape(expanded_lsr, X_validation[0].shape, order='F')
       Y_validation_predicted = inner_product(np.transpose(X_validation, (0, 2, 1)), expanded_lsr.flatten(order ='F')) + Y_train_mean
 

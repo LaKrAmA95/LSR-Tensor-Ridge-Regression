@@ -40,7 +40,7 @@ class LSR_tensor_dot():
                     factors_s.append(factor_matrix_B)
                 else:
                     #factor_matrix_A = np.random.normal(0,1,size= (self.shape[k], self.ranks[k]))
-                    factor_matrix_A = torch.normal(mean=0,std=1,size=[self.order[k],self.ranks[k]],dtype=self.dtype, device = self.device)
+                    factor_matrix_A = torch.normal(mean=0,std=1,size=[self.shape[k],self.ranks[k]],dtype=self.dtype, device = self.device)
                     factors_s.append(factor_matrix_A)
 
             self.factor_matrices.append(factors_s)
@@ -50,7 +50,7 @@ class LSR_tensor_dot():
     # a given term from the separation rank decomposition
     
     def expand_to_tensor(self, skip_term = None):
-        full_lsr_tensor = torch.zeros(shape = self.shape)
+        full_lsr_tensor = torch.zeros(size = self.shape)
 
         #Calculate Expanded Tensor
         for s, term_s_factors in enumerate(self.factor_matrices):
@@ -60,7 +60,7 @@ class LSR_tensor_dot():
 
         #Column Wise Flatten full_lsr_tensor
         #full_lsr_tensor = full_lsr_tensor.flatten(order = 'F')
-        full_lsr_tensor = full_lsr_tensor.T.fatten() # the transposing make the column major flattening possible
+        full_lsr_tensor = full_lsr_tensor.T.flatten() # the transposing make the column major flattening possible
         return full_lsr_tensor
 
     # Absorb all factor matrices and core tensor into the input tensor except for matrix s, k
