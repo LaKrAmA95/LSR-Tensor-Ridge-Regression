@@ -48,7 +48,7 @@ class RidgeRegression(nn.Module):
 #lr: learning rate
 #epochs: number of epochs
 #bias: whether we have intercept or not
-def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, bias = False):
+def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, batch_size, bias = False):
     #Initialize Cost Function
     cost_function = LeastSquares(X.shape[1])
     
@@ -70,8 +70,8 @@ def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, bias = False):
         y_shuffled = X[indices]
         
         #Get X and Y sample
-        X_sample = X_shuffled[0]
-        Y_sample = y_shuffled[0]
+        X_sample = X_shuffled[0: batch_size]
+        Y_sample = y_shuffled[0: batch_size]
             
         # Compute stochastic loss
         stochastic_loss = cost_function.evaluate(X_sample, Y_sample, 'mean')
@@ -103,7 +103,7 @@ def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, bias = False):
 #Y: Shape n x 1 where n is the number of samples
 #lamb: ridge parameter
 #bias: whether we have intercept or not
-def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, bias = False):
+def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, batch_size, bias = False):
     #Initialize Cost Function
     cost_function = RidgeRegression(X.shape[1], lamb)
     
@@ -125,8 +125,8 @@ def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, bias = False):
         y_shuffled = X[indices]
         
         #Get X and Y sample
-        X_sample = X_shuffled[0]
-        Y_sample = y_shuffled[0]
+        X_sample = X_shuffled[0: batch_size]
+        Y_sample = y_shuffled[0: batch_size]
             
         # Compute stochastic loss
         stochastic_loss = cost_function.evaluate(X_sample, Y_sample, 'mean')
