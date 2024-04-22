@@ -67,7 +67,7 @@ def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, batch_size, bias = False):
         # Shuffle dataset
         indices = torch.randperm(X.size(0))
         X_shuffled = X[indices]
-        y_shuffled = X[indices]
+        y_shuffled = Y[indices]
         
         for i in range(0, X.size(0), batch_size):
             #Get X and Y sample
@@ -125,7 +125,7 @@ def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, batch_size, bias = Fals
         # Shuffle dataset
         indices = torch.randperm(X.size(0))
         X_shuffled = X[indices]
-        y_shuffled = X[indices]
+        y_shuffled = Y[indices]
         
         for i in range(0, X.size(0), batch_size):
             #Get X and Y sample
