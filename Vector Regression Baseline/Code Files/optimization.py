@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 #Cost Function[Least Squares]
-#||Xw - y ||_2^2
+#1/n ||(XW + b) - Y||_2^2
 class LeastSquares(nn.Module):
     def __init__(self, input_dim, bias = False):
         super(LeastSquares, self).__init__() #Initialize class
@@ -20,7 +20,7 @@ class LeastSquares(nn.Module):
         return mse_loss(self.linear(X), y)
 
 #Cost Function[Least Squares + L2 Regularization Term]
-#||Xw - y ||_2^2 + lambda * ||w||^2_2
+#1/n ||(XW + b) - Y ||_2^2 + lambda * ||w||^2_2
 class RidgeRegression(nn.Module):
     def __init__(self, input_dim, lambda1, bias = False):
         super(RidgeRegression, self).__init__()
@@ -37,27 +37,36 @@ class RidgeRegression(nn.Module):
             
     #Calculate value of lambda * ||w||^2_2
     def l2_regularization(self):
-        l2_reg = 0
-        for param in self.parameters():
-            l2_reg += torch.norm(param) ** 2
-        return self.lambda1 * l2_reg
+        return self.lambda1 * (torch.norm(self.linear.weight) ** 2)
 
 #Optimize the Least Squares Cost Function via Stochastic Gradient Descent
 #X: Shape n x d where n is the number of samples and d is the number of features
 #Y: Shape n x 1 where n is the number of samples
 #lr: learning rate
 #epochs: number of epochs
+#batch_size: batch size
+#momentum: momentum
+#dampening: dampnent constant
+#nesterov: True to Enable Nesterov Momentum Computation
+#decay_factor: Decay Factor for RMSProp
+#optimizer_code: 0 for SGD, 1 for Adagrad, 2 for RMSProp
 #bias: whether we have intercept or not
-def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, batch_size, bias = False):
+def SGD1(X: np.ndarray, Y: np.ndarray, lr = 0.005, epochs = 500, batch_size = 1, momentum = 0, dampening = 0, nesterov = False, decay_factor = 0, optimizer_code = 0, bias = False):
     #Initialize Cost Function
-    cost_function = LeastSquares(X.shape[1])
+    cost_function = LeastSquares(X.shape[1], bias)
     
     #Convert X and Y to pytorch tensors
     X = torch.tensor(X, dtype = torch.float32)
     Y = torch.tensor(Y, dtype = torch.float32)
     
-    #Initialize SGD Optimizer
-    optimizer = optim.SGD(cost_function.parameters(), lr = lr)
+    #Initialize Optimizer
+    optimizer = None
+    if optimizer_code == 0:
+        optimizer = optim.SGD(cost_function.parameters(), lr = lr, momentum = momentum, dampening = dampening, nesterov = nesterov)
+    elif optimizer_code == 1:
+        optimizer = optim.Adagrad(cost_function.parameters(), lr = lr)
+    elif optimizer_code == 2:
+        optimizer = optim.RMSprop(cost_function.parameters(), lr = lr, alpha = decay_factor, momentum = momentum)
     
     #Store batch loss values
     loss_values = []
@@ -93,6 +102,7 @@ def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, batch_size, bias = False):
 
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
+    #return weights and bias
     if bias:
         return weights, cost_function.linear.bias.item(), loss_values
     else:
@@ -102,17 +112,31 @@ def SGD1(X: np.ndarray, Y: np.ndarray, lr, epochs, batch_size, bias = False):
 #X: Shape n x d where n is the number of samples and d is the number of features
 #Y: Shape n x 1 where n is the number of samples
 #lamb: ridge parameter
+#lr: learning rate
+#epochs: number of epochs
+#batch_size: batch size
+#momentum: momentum
+#dampening: dampnent constant
+#nesterov: True to Enable Nesterov Momentum Computation
+#decay_factor: Decay Factor for RMSProp
+#optimizer_code: 0 for SGD, 1 for Adagrad, 2 for RMSProp
 #bias: whether we have intercept or not
-def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, batch_size, bias = False):
+def SGD2(X: np.ndarray, Y: np.ndarray, lamb = 0.1, lr = 0.005, epochs = 500, batch_size = 1, momentum = 0, dampening = 0, nesterov = False, decay_factor = 0, optimizer_code = 0, bias = False):
     #Initialize Cost Function
-    cost_function = RidgeRegression(X.shape[1], lamb)
+    cost_function = RidgeRegression(X.shape[1], lamb, bias)
     
     #Convert X and Y to pytorch tensors
     X = torch.tensor(X, dtype = torch.float32)
     Y = torch.tensor(Y, dtype = torch.float32)
     
-    #Initialize SGD Optimizer
-    optimizer = optim.SGD(cost_function.parameters(), lr = lr)
+    #Initialize Optimizer
+    optimizer = None
+    if optimizer_code == 0:
+        optimizer = optim.SGD(cost_function.parameters(), lr = lr, momentum = momentum, dampening = dampening, nesterov = nesterov)
+    elif optimizer_code == 1:
+        optimizer = optim.Adagrad(cost_function.parameters(), lr = lr)
+    elif optimizer_code == 2:
+        optimizer = optim.RMSprop(cost_function.parameters(), lr = lr, alpha = decay_factor, momentum = momentum)
     
     #Store batch loss values
     loss_values = []
@@ -148,6 +172,7 @@ def SGD2(X: np.ndarray, Y: np.ndarray, lamb, lr, epochs, batch_size, bias = Fals
 
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
+    #return weights and bias
     if bias:
         return weights, cost_function.linear.bias.item(), loss_values
     else:
