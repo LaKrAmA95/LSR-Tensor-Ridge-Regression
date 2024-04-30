@@ -61,8 +61,8 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
     #initializing all the solvers
     
-    factor_matrix_models = [[optim.SGD([lsr_ten.factor_matrices[s][k]],lr=0.00001) for k in range(len(ranks))] for s in range(sep_rank)]
-    core_tensor_model = optim.SGD([lsr_ten.core_tensor], lr = 0.00001)
+    factor_matrix_models = [[optim.SGD([lsr_ten.factor_matrices[s][k]],lr=0.0000042) for k in range(len(ranks))] for s in range(sep_rank)]
+    core_tensor_model = optim.SGD([lsr_ten.core_tensor], lr = 0.0000042)
     
     #constructing the model 
     Cost_Model = CostFunction(lambda1)
@@ -174,7 +174,10 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
 
         objective_function_value_core = loss_core.item() #objective_function_tensor(y, X, expanded_lsr, lambda1)
-        objective_function_values[0,2,iteration] = objective_function_value_core   
+        objective_function_values[0,2,iteration] = objective_function_value_core
+
+        global_function_value = objective_function_tensor (y,X,expanded_lsr,lambda1)
+        objective_function_values[1,2,iteration] = global_function_value   
         #print(objective_function_values[0,2,iteration])        
 
         # Print Objective Function Value

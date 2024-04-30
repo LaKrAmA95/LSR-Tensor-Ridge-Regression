@@ -14,17 +14,24 @@ def TrainTest(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_te
   #Using the Fitted Model, generate Y_validation_predicted
   Y_test_predicted = X_test @ W_estimated + b
 
+  
   #Compute NEE, NMSE, Correlation, and R^2 Score
   test_normalized_estimation_error = ((np.linalg.norm(W_estimated - W)) ** 2) /  ((np.linalg.norm(W)) ** 2)
   test_nmse_loss = np.sum(np.square((Y_test_predicted - Y_test))) / np.sum(np.square(Y_test))  
   test_correlation = np.corrcoef(Y_test_predicted.flatten(), Y_test.flatten())[0, 1]
 
+
   r2 = R2Score()
   r2.update(torch.tensor(Y_test_predicted), torch.tensor(Y_test))
   test_R2_score = r2.compute()
 
+ 
+  #computing the object function value
+  Testing_objective_function_value = (np.linalg.norm(Y_test - (X_test @ W_estimated + b)) ** 2) + (best_lambda * (np.linalg.norm(W_estimated) ** 2))
+
+  
   #Print Test Results
-  print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, Intercept: {b}")
+  print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, Intercept: {b}, Object Function Value: {Testing_objective_function_value}")
 
   #Return Test Results
   return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score, Y_test_predicted
