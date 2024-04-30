@@ -33,11 +33,11 @@ def optimization_subroutine(X_train: np.ndarray, Y_train: np.ndarray, lambda1, b
     Y_train_tensor = torch.tensor(Y_train, dtype = torch.float32)
 
     #Initialize Cost Function and the SGD Optimizer
-    cost_function = CostFunction(X_train.shape[1], lambda1)
+    cost_function = CostFunction(X_train.shape[1], lambda1,bias)
     optimizer = optim.SGD(cost_function.parameters(), lr = 0.0001)
 
     #For now, set batch size to 256 and number of epochs to 10
-    batch_size = 256
+    batch_size = 256 
     num_epochs = 100
 
     #Training Loop
@@ -65,8 +65,8 @@ def optimization_subroutine(X_train: np.ndarray, Y_train: np.ndarray, lambda1, b
             optimizer.step()
 
         # Print progress
-        if (epoch + 1) % 10 == 0:
-            print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+        #if (epoch + 1) % 10 == 0:
+        #    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
