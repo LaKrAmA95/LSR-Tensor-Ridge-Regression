@@ -2,7 +2,7 @@ from sklearn.linear_model import Ridge
 import numpy as np
 from LSR_Tensor_2D_v1 import LSR_tensor_dot
 from lsr_bcd_regression import lsr_bcd_regression
-from optimization import inner_product, R2
+from optimization import inner_product, R2, objective_function_vectorized
 
 def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_test: np.ndarray, B_tensored: np.ndarray, lambda1, hypers,Y_train_mean, intercept = False):
   hypers['weight_decay'] = lambda1
@@ -57,6 +57,10 @@ def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, B_tensored: np.ndarra
       b = lrr_model.intercept_
       print('Itercept and Test:',b)
 
+    #having objective function value
+    p_star = objective_function_vectorized(Y_train, X_train, w_flattened.reshape((-1, 1)), lambda1, b if need_intercept else None)
+
+
     #Using the fitted LRR Model, get the Predicted Test Data
     Y_test_predicted = lrr_model.predict(X_test).flatten()
 
@@ -67,7 +71,7 @@ def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, B_tensored: np.ndarra
     test_R2_score = lrr_model.score(X_test, Y_test)
 
     #Print Test Results
-    print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}")
+    print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, p_stat: {p_star}")
 
     #Return Test Results
-    return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted
+    return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted,p_star
