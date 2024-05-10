@@ -128,6 +128,7 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         Y_predicted = X_numpy @ weights + bias
         Y_numpy = Y.numpy()
         
+
         nee = ((np.linalg.norm(weights - W_true)) ** 2) /  ((np.linalg.norm(W_true)) ** 2)
         nmse = np.sum(np.square((Y_predicted - Y_numpy))) / np.sum(np.square(Y_numpy))
         correlation = np.corrcoef(Y_predicted.flatten(), Y_numpy.flatten())[0, 1]
