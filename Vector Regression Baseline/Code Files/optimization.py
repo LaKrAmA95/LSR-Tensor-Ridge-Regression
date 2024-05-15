@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import r2_score
 from collections import defaultdict
+from torch.utils.data import TensorDataset, DataLoader
 
 #Cost Function[Least Squares]
 #||(XW + b) - Y||_2^2
@@ -72,6 +73,10 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
     #If W_true is None, set it to a zero vector
     if not isinstance(W_true, np.ndarray):
         W_true = np.zeros(shape = (X.shape[1], 1))
+
+    #Splitting data into minibatches 
+    dataset = TensorDataset(X,Y)
+    dataloader = DataLoader(dataset, batch_size = batch_size,  shuffle=True )
     
     #Initialize Optimizer
     if optimizer_code == 0:
@@ -95,27 +100,31 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
 
     #Training Loop
     for epoch in range(epochs):
-        # Shuffle dataset
-        indices = torch.randperm(X.size(0))
-        X_shuffled = X[indices]
-        y_shuffled = Y[indices]
+
+        for X_sample, Y_sample in dataloader:
         
-        #Get X and Y sample
-        X_sample = X_shuffled[0: batch_size]
-        Y_sample = y_shuffled[0: batch_size]
+            # Shuffle dataset
+            #indices = torch.randperm(X.size(0))
+            #X_shuffled = X[indices]
+            #y_shuffled = Y[indices]
+        
+            #Get X and Y sample
+            #X_sample = X_shuffled[0: batch_size]
+            #Y_sample = y_shuffled[0: batch_size]
             
-        # Compute stochastic loss
-        stochastic_loss = cost_function.evaluate(X_sample, Y_sample, 'sum')
+            # Compute stochastic loss
+            stochastic_loss = cost_function.evaluate(X_sample, Y_sample, 'sum')
 
-        # Zero gradients
-        optimizer.zero_grad()
+            # Zero gradients
+            optimizer.zero_grad()
 
-        # Backward pass to compute stochastic gradient
-        stochastic_loss.backward()
+            # Backward pass to compute stochastic gradient
+            stochastic_loss.backward()
 
-        # Update parameters
-        optimizer.step()
-                
+            # Update parameters
+            optimizer.step()
+            
+        print('------------------------------------------------------------------epoch 1 completed------------------------------------------------------------------')        
         #Print and Store batch loss values
         batch_loss = cost_function.evaluate(X, Y, 'sum')
         loss_values.append(batch_loss.item())
