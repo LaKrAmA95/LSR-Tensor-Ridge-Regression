@@ -37,7 +37,7 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray,alphas, k_folds, hypers, B_
     for index1, alpha1 in enumerate(alphas):
       hypers['weight_decay'] = alpha1
 
-      lsr_ten, objective_function_values = lsr_bcd_regression(lsr_tensors[index1][fold], X_train_updated, Y_train_updated, hypers, intercept = need_intercept) 
+      lsr_ten, objective_function_values, gradient_values = lsr_bcd_regression(lsr_tensors[index1][fold], X_train_updated, Y_train_updated, hypers, intercept = need_intercept) 
       expanded_lsr = lsr_ten.expand_to_tensor()
       expanded_lsr = np.reshape(expanded_lsr, X_validation[0].shape, order='F')
       

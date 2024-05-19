@@ -29,6 +29,9 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
     #Normalized Estimation Error
     iterations_normalized_estimation_error = np.zeros(shape = (max_iter,))
+    
+    #Gradient Values
+    gradient_values = np.zeros(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
@@ -82,6 +85,15 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
                 #Print Objective Function Values
                 # print(f"Iteration: {iteration}, Separation Rank: {s}, Factor Matrix: {k}, Objective Function Value: {objective_function_value}")
+                
+                #Calculate Gradient Values
+                bk = np.reshape(Bk, (-1, 1), order = 'F') #Flatten Factor Matrix Column Wise
+                Omega = X_tilde
+                z = bias
+                gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ bk  - z) + (2 * lambda1 * bk)
+                
+                #Store Gradient Values
+                gradient_values[iteration, s, k] = gradient_value
 
 
         #Absorb necessary matrices into X, aside from core tensor, to get X_tilde
@@ -119,6 +131,15 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         #print('')
         #Print Objective Function Value
         # print(f"BCD Regression, Iteration: {iteration}, Core Tensor, Objective Function Value: {objective_function_value}")
+        
+        #Calculate Gradient Values
+        g = np.reshape(Gk, (-1, 1), order = 'F') #Flatten Core Matrix Column Wise
+        Omega = X_tilde
+        z = bias
+        gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ g  - z) + (2 * lambda1 * g)
+        
+        #Store Gradient Value
+        gradient_values[iteration, :, (len(ranks))] = gradient_value
 
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this
@@ -129,4 +150,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values
+    return lsr_ten, objective_function_values, gradient_values

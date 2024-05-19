@@ -16,7 +16,7 @@ def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_t
 
   #Construct LSR Tensor
   lsr_tensor = LSR_tensor_dot(shape = LSR_tensor_dot_shape, ranks = ranks, separation_rank = separation_rank, intercept = need_intercept)
-  lsr_tensor, objective_function_values = lsr_bcd_regression(lsr_tensor, X_train, Y_train, hypers,intercept = need_intercept)
+  lsr_tensor, objective_function_values, gradient_values = lsr_bcd_regression(lsr_tensor, X_train, Y_train, hypers,intercept = need_intercept)
   expanded_lsr = lsr_tensor.expand_to_tensor()
   expanded_lsr = np.reshape(expanded_lsr, X_train[0].shape, order = 'F')
   print(expanded_lsr.shape)
