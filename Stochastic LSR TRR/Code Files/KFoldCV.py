@@ -29,6 +29,9 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray,alphas, k_folds, hypers, B_
   #Store objective function values for each fold/alpha
   objective_function_information = np.ones(shape = (k_folds, len(alphas), hypers['max_iter'], separation_rank, len(ranks) + 1))
 
+  #Store gradient information 
+  gradient_information = np.ones(shape = (k_folds, len(alphas), hypers['max_iter'], separation_rank, len(ranks) + 1))
+
   #Go thru each fold
   for fold, (train_ids, validation_ids) in enumerate(kfold.split(X_train)):
     X_train_updated, Y_train_updated = X_train[train_ids], Y_train[train_ids]
@@ -61,6 +64,9 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray,alphas, k_folds, hypers, B_
       #Store Objective Function Information
       objective_function_information[fold, index1] = objective_function_values
 
+      #store gradient information
+      gradient_information[fold,index1] = gradient_values
+
       if B_tensored is not None: 
          print(f"Fold = {fold}, Alpha = {alpha1}, Normalized Estimation Error: {normalized_estimation_error}, NMSE: {validation_nmse_loss}, Correlation: {correlation}, R^2 Score: {R2_value}")
       else:
@@ -77,10 +83,10 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray,alphas, k_folds, hypers, B_
   lambda1 = alphas[np.argmin(flattened_avg_validation_nmse_losses)]
 
   if B_tensored is not None:
-    return lambda1, validation_normalized_estimation_error, validation_nmse_losses, validation_correlations, validation_R2_scores, objective_function_information
+    return lambda1, validation_normalized_estimation_error, validation_nmse_losses, validation_correlations, validation_R2_scores, objective_function_information,gradient_information
   else:
     validation_normalized_estimation_error = np.inf
-    return lambda1, validation_normalized_estimation_error, validation_nmse_losses, validation_correlations, validation_R2_scores, objective_function_information
+    return lambda1, validation_normalized_estimation_error, validation_nmse_losses, validation_correlations, validation_R2_scores, objective_function_information,gradient_information
     
 
 #Run KFold Cross Validation

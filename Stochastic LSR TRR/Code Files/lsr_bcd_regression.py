@@ -31,7 +31,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     iterations_normalized_estimation_error = np.zeros(shape = (max_iter,))
     
     #Gradient Values
-    gradient_values = np.zeros(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
+    gradient_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
@@ -93,7 +93,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
                 gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ bk  - z) + (2 * lambda1 * bk)
                 
                 #Store Gradient Values
-                gradient_values[iteration, s, k] = gradient_value
+                gradient_values[iteration, s, k] = np.linalg.norm(gradient_value, ord = 'fro')
 
 
         #Absorb necessary matrices into X, aside from core tensor, to get X_tilde
@@ -139,7 +139,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ g  - z) + (2 * lambda1 * g)
         
         #Store Gradient Value
-        gradient_values[iteration, :, (len(ranks))] = gradient_value
+        gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
 
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this
