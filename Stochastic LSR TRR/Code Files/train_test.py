@@ -4,7 +4,7 @@ from LSR_Tensor_2D_v1 import LSR_tensor_dot
 from lsr_bcd_regression import lsr_bcd_regression
 from optimization import inner_product, R2, objective_function_vectorized
 
-def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_test: np.ndarray, B_tensored: np.ndarray, lambda1, hypers,Y_train_mean, intercept = False):
+def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_test: np.ndarray, lambda1, hypers,Y_train_mean,B_tensored = None,intercept = False):
   hypers['weight_decay'] = lambda1
 
   
@@ -25,14 +25,19 @@ def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_t
   print('---------------------------Testing with Best Lambda------------------------------')
   #print(f"Y_test_predicted: {Y_test_predicted.flatten()}, Y_test: {Y_test.flatten()}")
   test_nmse_loss = np.sum(np.square((Y_test_predicted.flatten() - Y_test.flatten()))) / np.sum(np.square(Y_test.flatten()))
-  normalized_estimation_error = ((np.linalg.norm(expanded_lsr - B_tensored)) ** 2) /  ((np.linalg.norm(B_tensored)) ** 2)
+  if B_tensored is not None:
+    normalized_estimation_error = ((np.linalg.norm(expanded_lsr - B_tensored)) ** 2) /  ((np.linalg.norm(B_tensored)) ** 2)
   test_R2_loss = R2(Y_test.flatten(), Y_test_predicted.flatten())
   test_correlation = np.corrcoef(Y_test_predicted.flatten(), Y_test.flatten())[0, 1]
 
   #print("Y Test Predicted: ", Y_test_predicted.flatten())
   #print("Y Test Actual: ", Y_test.flatten())
 
-  return normalized_estimation_error, test_nmse_loss, test_R2_loss, test_correlation, objective_function_values
+  if B_tensored is not None:
+    return normalized_estimation_error, test_nmse_loss, test_R2_loss, test_correlation, objective_function_values,gradient_values
+  else:
+    normalized_estimation_error = np.inf
+    return normalized_estimation_error, test_nmse_loss, test_R2_loss, test_correlation, objective_function_values,gradient_values
 
 #Given the Best Lambda found by KFoldCV, train a LRR model with that best lambda and generate test metrics!
 def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, lambda1,B_tensored = None, intercept = False):
