@@ -34,14 +34,15 @@ def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_t
   return normalized_estimation_error, test_nmse_loss, test_R2_loss, test_correlation, objective_function_values
 
 #Given the Best Lambda found by KFoldCV, train a LRR model with that best lambda and generate test metrics!
-def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, B_tensored: np.ndarray, lambda1, intercept = False):
+def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, lambda1,B_tensored = None, intercept = False):
     
     # need intercept
 
     need_intercept = intercept 
     
     #Flatten B_tensored
-    B_true = B_tensored.flatten()
+    if B_tensored is not None:
+      B_true = B_tensored.flatten()
 
     #Flatten Y_train and Y_test
     Y_train = Y_train.flatten()
@@ -65,13 +66,22 @@ def TrainTest_Vectorized(X_train, Y_train, X_test, Y_test, B_tensored: np.ndarra
     Y_test_predicted = lrr_model.predict(X_test).flatten()
 
     #Compute NEE, NMSE, Correlation, and R^2 Score
-    test_normalized_estimation_error = ((np.linalg.norm(w_flattened - B_true)) ** 2) /  ((np.linalg.norm(B_true)) ** 2)
+    if B_tensored is not None: 
+      test_normalized_estimation_error = ((np.linalg.norm(w_flattened - B_true)) ** 2) /  ((np.linalg.norm(B_true)) ** 2)
     test_nmse_loss = np.sum(np.square((Y_test_predicted - Y_test))) / np.sum(np.square(Y_test))
     test_correlation = np.corrcoef(Y_test_predicted, Y_test)[0, 1]
     test_R2_score = lrr_model.score(X_test, Y_test)
 
     #Print Test Results
-    print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, p_stat: {p_star}")
-
+    if B_tensored is not None: 
+      print(f"NEE: {test_normalized_estimation_error}, NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, p_stat: {p_star}")
+    else:
+      print(f"NMSE: {test_nmse_loss}, Correlation: {test_correlation}, R^2 Score: {test_R2_score}, p_stat: {p_star}")
+    
+    
     #Return Test Results
-    return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted,p_star
+    if B_tensored is not None:
+      return test_normalized_estimation_error, test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted,p_star
+    else:
+      test_normalized_estimation_error = float('inf')
+      return test_normalized_estimation_error,test_nmse_loss, test_correlation, test_R2_score,Y_test_predicted,p_star
