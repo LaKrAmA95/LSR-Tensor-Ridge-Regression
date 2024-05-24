@@ -369,15 +369,20 @@ def GD2(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, p_sta
         nmse_values.append(nmse)
         corr_values.append(correlation)
         R2_values.append(R2_score)
+                
+        print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss_value:.4f}, Gap to Optimality: {gap_to_optimality[-1]:.4f}, NEE: {nee}, NMSE: {nmse}, Correlation: {correlation}, R2: {R2_score}')
         
-        # Print gradients
+        # Stopping Criteria
+        criteria_satisfied = True
         for name, param in cost_function.named_parameters():
             if param.grad is not None:
                 print(f"Gradient Norm for {name}: {torch.norm(param.grad)}")
+                criteria_satisfied = criteria_satisfied and (torch.norm(param.grad) <= 1)
             else:
                 print(f"No gradient Norm for {name}")
         
-        print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss_value:.4f}, Gap to Optimality: {gap_to_optimality[-1]:.4f}, NEE: {nee}, NMSE: {nmse}, Correlation: {correlation}, R2: {R2_score}')
+        if criteria_satisfied:
+            break
 
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
