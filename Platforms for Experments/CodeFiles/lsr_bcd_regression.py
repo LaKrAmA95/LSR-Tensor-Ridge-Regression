@@ -1,7 +1,7 @@
 from sklearn.linear_model import Ridge
 import LSR_Tensor_2D_v1
 import numpy as np
-from optimization import objective_function_tensor
+from optimization import objective_function_tensor_sep
 from sklearn.linear_model import SGDRegressor
 from sgd_optimization import SGD
 
@@ -31,7 +31,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     if intercept: b_start = lsr_ten.get_intercept()
     expanded_lsr_start  = lsr_ten.expand_to_tensor()
     expanded_lsr_start  = np.reshape(expanded_lsr_start, X[0].shape, order = 'F')
-    objective_function_value_star = objective_function_tensor(y, X, expanded_lsr_start, lambda1, b if intercept else None)
+    objective_function_value_star = objective_function_tensor_sep(y, X, expanded_lsr_start,lsr_ten, lambda1, b if intercept else None)
     print('Objective Function Value:',objective_function_value_star)
 
     #Normalized Estimation Error
@@ -87,7 +87,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
                 #Calculate Objective Function Value
                 expanded_lsr = lsr_ten.expand_to_tensor()
                 expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
-                objective_function_value = objective_function_tensor(y, X, expanded_lsr, lambda1)
+                objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten,lambda1)
                 objective_function_values[iteration, s, k] = objective_function_value
 
                 #Print Objective Function Values
@@ -133,7 +133,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         expanded_lsr = lsr_ten.expand_to_tensor()
         expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
 
-        objective_function_value = objective_function_tensor(y, X, expanded_lsr, lambda1, b if intercept else None)
+        objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1, b if intercept else None)
         objective_function_values[iteration, :, (len(ranks))] = objective_function_value
         #print('')
         #Print Objective Function Value

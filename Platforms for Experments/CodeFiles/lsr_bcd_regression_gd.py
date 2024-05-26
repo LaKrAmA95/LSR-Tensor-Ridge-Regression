@@ -1,8 +1,9 @@
 from sklearn.linear_model import Ridge
 import LSR_Tensor_2D_v1
 import numpy as np
-from optimization_closed import objective_function_tensor_sep
+from optimization import objective_function_tensor_sep
 from sklearn.linear_model import SGDRegressor
+from sgd_optimization import GD2
 
 #lsr_ten: LSR Tensor
 #training_data: X
@@ -14,11 +15,14 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     lambda1 = hypers["weight_decay"]
     max_iter = hypers["max_iter"]
     threshold = hypers["threshold"]
+    lr        = hypers["learning_rate"]
+    epochs    = hypers["epochs"]
+    batch_size = hypers["batch_size"]
     b_intercept = intercept
 
     #Create models for each factor matrix and core matrix
-    factor_matrix_models = [[Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept) for k in range(len(ranks))] for s in range(sep_rank)]
-    core_tensor_model = Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept)
+    #factor_matrix_models = [[Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept) for k in range(len(ranks))] for s in range(sep_rank)]
+    #core_tensor_model = Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept)
 
     #Store objective function values
     objective_function_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
@@ -32,9 +36,14 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
     #Normalized Estimation Error
     iterations_normalized_estimation_error = np.zeros(shape = (max_iter,))
+    
+    #Gradient Values
+    gradient_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
+        #print('')
+        #print('--------------------------------------------------------------BCD iteration',iteration,'--------------------------------------------------------------')
         factor_residuals = np.zeros(shape = (sep_rank, len(ranks)))
         core_residual = 0
 
@@ -46,23 +55,23 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         for s in range(sep_rank):
             for k in range(len(ranks)):
                 #Absorb Factor Matrices into X aside from (s, k) to get X_tilde
-
+                #print('')
+                #print('---------------------------------------------Sep',s,'Factor',k,'-------------------------------------------------')
                 X, y = training_data, training_labels
                 X_tilde, y_tilde = lsr_ten.bcd_factor_update_x_y(s, k, X, y) #y tilde should now be y-b-<Q,X>
                 
 
                 #Solve the sub-problem pertaining to the factor tensor
-                factor_matrix_models[s][k].fit(X_tilde, y_tilde)
+                hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': batch_size, 'bias': b_intercept}
+                weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values = GD2(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, p_star = 0)
 
                 #Retrieve Original and Updated Factor Matrices
                 Bk = lsr_ten.get_factor_matrix(s, k)
-                Bk1 = factor_matrix_models[s][k].coef_
-                if intercept: b = factor_matrix_models[s][k].intercept_
-
-
+                Bk1 = weights
+                if intercept: b = bias
 
                 #Shape Bk1 as needed
-                Bk1 = np.reshape(Bk1, (shape[k], ranks[k]), order = 'F')
+                Bk1 = np.reshape(Bk1, (shape[k], ranks[k]), order = 'F') #if there is an error check here
 
 
                 #Update Residuals and store updated factor matrix
@@ -78,24 +87,35 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
                 #Calculate Objective Function Value
                 expanded_lsr = lsr_ten.expand_to_tensor()
                 expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
-                objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1)# CHECK THISSSS______________________________
+                objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1)
                 objective_function_values[iteration, s, k] = objective_function_value
 
                 #Print Objective Function Values
                 # print(f"Iteration: {iteration}, Separation Rank: {s}, Factor Matrix: {k}, Objective Function Value: {objective_function_value}")
+                
+                #Calculate Gradient Values
+                bk = np.reshape(Bk, (-1, 1), order = 'F') #Flatten Factor Matrix Column Wise
+                Omega = X_tilde
+                z = bias
+                gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ bk  - z) + (2 * lambda1 * bk)
+                
+                #Store Gradient Values
+                gradient_values[iteration, s, k] = np.linalg.norm(gradient_value, ord = 'fro')
 
 
         #Absorb necessary matrices into X, aside from core tensor, to get X_tilde
+        #print('---------------------------------------------Core-------------------------------------------------')
         X, y = training_data, training_labels
         X_tilde, y_tilde = lsr_ten.bcd_core_update_x_y(X, y)
 
         #Solve the sub-problem pertaining to the core tensor
-        core_tensor_model.fit(X_tilde, y_tilde)
+        hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': 64, 'bias': intercept}
+        weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values = GD2(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, p_star = 0)
 
         #Get Original and Updated Core Tensor
         Gk = lsr_ten.get_core_matrix()
-        Gk1 = np.reshape(core_tensor_model.coef_, ranks, order = 'F')
-        if intercept: b = core_tensor_model.intercept_
+        Gk1 = np.reshape(weights, ranks, order = 'F')
+        if intercept: b = bias
 
         #Update Residuals and store updated Core Tensor
         core_residual = np.linalg.norm(Gk1 - Gk)
@@ -115,10 +135,18 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
         objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1, b if intercept else None)
         objective_function_values[iteration, :, (len(ranks))] = objective_function_value
-        
-        
+        #print('')
         #Print Objective Function Value
         # print(f"BCD Regression, Iteration: {iteration}, Core Tensor, Objective Function Value: {objective_function_value}")
+        
+        #Calculate Gradient Values
+        g = np.reshape(Gk, (-1, 1), order = 'F') #Flatten Core Matrix Column Wise
+        Omega = X_tilde
+        z = bias
+        gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ g  - z) + (2 * lambda1 * g)
+        
+        #Store Gradient Value
+        gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
 
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this
@@ -129,4 +157,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values
+    return lsr_ten, objective_function_values, gradient_values
