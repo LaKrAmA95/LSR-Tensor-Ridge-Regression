@@ -43,7 +43,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
         #print('')
-        #print('--------------------------------------------------------------BCD iteration',iteration,'--------------------------------------------------------------')
+        print('--------------------------------------------------------------BCD iteration',iteration,'--------------------------------------------------------------')
         factor_residuals = np.zeros(shape = (sep_rank, len(ranks)))
         core_residual = 0
 
@@ -56,7 +56,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
             for k in range(len(ranks)):
                 #Absorb Factor Matrices into X aside from (s, k) to get X_tilde
                 #print('')
-                #print('---------------------------------------------Sep',s,'Factor',k,'-------------------------------------------------')
+                print('---------------------------------------------Sep',s,'Factor',k,'-------------------------------------------------')
                 X, y = training_data, training_labels
                 X_tilde, y_tilde = lsr_ten.bcd_factor_update_x_y(s, k, X, y) #y tilde should now be y-b-<Q,X>
                 
@@ -104,7 +104,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
 
         #Absorb necessary matrices into X, aside from core tensor, to get X_tilde
-        #print('---------------------------------------------Core-------------------------------------------------')
+        print('---------------------------------------------Core-------------------------------------------------')
         X, y = training_data, training_labels
         X_tilde, y_tilde = lsr_ten.bcd_core_update_x_y(X, y)
 
