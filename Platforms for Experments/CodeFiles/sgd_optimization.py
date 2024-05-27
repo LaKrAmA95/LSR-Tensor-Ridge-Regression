@@ -166,7 +166,7 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         R2_values.append(R2_score)
         
         
-        #print(f'Epoch [{epoch+1}/{epochs}], Loss: {batch_loss:.4f}, Gap to Optimality: {gap_to_optimality[-1]:.4f}, NMSE: {nmse}, Correlation: {correlation}, R2: {R2_score}')
+        print(f'Epoch [{epoch+1}/{epochs}], Loss: {batch_loss:.4f}, Gap to Optimality: {gap_to_optimality[-1]:.4f}, NMSE: {nmse}, Correlation: {correlation}, R2: {R2_score}')
     
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
