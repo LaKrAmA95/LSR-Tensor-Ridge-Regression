@@ -6,6 +6,7 @@ import torch.optim as optim
 from sklearn.metrics import r2_score
 from collections import defaultdict
 from torch.utils.data import TensorDataset, DataLoader
+import matplotlib.pyplot as plt
 
 #Cost Function[Least Squares]
 #||(XW + b) - Y||_2^2
@@ -105,6 +106,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
     
     #Store gap to optimality
     gap_to_optimality = []
+
+    #saving gradient 
+    sub_problem_gradient =  []
     
     #Store Metric Values
 
@@ -114,40 +118,52 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
 
     #Training Loop
     for epoch in range(epochs):
+    
+        num_batches = 0
+        sum_gradient_norm = 0
 
         for X_sample, Y_sample in dataloader:
         
-            # Shuffle dataset
-            #indices = torch.randperm(X.size(0))
-            #X_shuffled = X[indices]
-            #y_shuffled = Y[indices]
-        
-            #Get X and Y sample
-            #X_sample = X_shuffled[0: batch_size]
-            #Y_sample = y_shuffled[0: batch_size]
-            
             Y_sample = Y_sample.reshape(-1,1)
 
-            
             # Compute stochastic loss
             stochastic_loss = cost_function.evaluate(X_sample, Y_sample, 'sum')
-
+            
             # Zero gradients
             optimizer.zero_grad()
-
+            
             # Backward pass to compute stochastic gradient
             stochastic_loss.backward()
-
+            
             # Update parameters
             optimizer.step()
-
-        
             
-        #print('------------------------------------------------------------------epoch:',epoch,'completed------------------------------------------------------------------')        
+            #storing the batch wise gradients 
+            for param in cost_function.parameters():
+               #print(f"Gradient Norm: {torch.norm(param.grad)}")
+               stochastic_gradient  = torch.norm(param.grad)
+               sum_gradient_norm += stochastic_gradient
+            
+            num_batches += 1
+
         #Print and Store batch loss values
         batch_loss = cost_function.evaluate(X, Y, 'sum')
         loss_values.append(batch_loss.item())
         gap_to_optimality.append(batch_loss.item() - p_star)
+
+        #Zero gradients
+        #optimizer.zero_grad()
+
+        # Backward pass to compute stochastic gradient
+        #batch_loss.backward()
+
+        #for param in cost_function.parameters():
+        #       #print(f"Gradient Norm: {torch.norm(param.grad)}")
+        #       gradient_after_epoch = torch.norm(param.grad)
+        #       sub_problem_gradient.append(gradient_after_epoch)
+
+        epcoh_gradient = sum_gradient_norm/num_batches
+        sub_problem_gradient.append(epcoh_gradient)
         
         #Calculate Metrics
         weights = cost_function.linear.weight.data.numpy().reshape((-1, 1))
@@ -167,14 +183,39 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         
         
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {batch_loss:.4f}, Gap to Optimality: {gap_to_optimality[-1]:.4f}, NMSE: {nmse}, Correlation: {correlation}, R2: {R2_score}')
-    
+
+    # Create a figure with two horizontal subplots
+    #fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+    # Plotting in the first subplot (ax1)
+    #ax1.plot(range(1, len(loss_values) + 1), loss_values, marker='o')
+    #ax1.set_title('Subproblem Loss')
+    #ax1.set_yscale('log')
+    #ax1.set_xlabel('Epoch')
+    #ax1.set_ylabel('Loss')
+    #ax1.grid(True)
+
+    # Plotting in the second subplot (ax2)
+    #ax2.plot(range(1, len(sub_problem_gradient) + 1), sub_problem_gradient, marker='o')
+    #ax2.set_title('Subproblem Gradient')
+    #ax2.set_yscale('log')
+    #ax2.set_xlabel('Epoch')
+    #ax2.set_ylabel('Loss')
+    #ax2.grid(True)
+
+    # Adjust the layout to prevent overlap
+    #plt.tight_layout()
+
+    # Display the plot
+    #plt.show()
+
     weights = cost_function.linear.weight.data.numpy().reshape((-1, 1)) #Return weights as numpy array
 
     #return weights and bias and loss metrics
     if uses_bias:
-        return weights, cost_function.linear.bias.item(), loss_values, gap_to_optimality, nmse_values, corr_values, R2_values
+        return weights, cost_function.linear.bias.item(), loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient
     else:
-        return weights, 0, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values
+        return weights, 0, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient
     
 
 #Optimize a Cost Function via Gradient Descent with Exact Line Search
