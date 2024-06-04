@@ -9,7 +9,7 @@ from sgd_optimization import SGD
 #training_data: X
 #training_labels: Y
 #hypers: hyperparameters
-def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.ndarray, hypers: dict, intercept = False):
+def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.ndarray, hypers: dict,intercept = False):
     #Get LSR Tensor Information and other hyperparameters
     shape, ranks, sep_rank, order = lsr_ten.shape, lsr_ten.ranks, lsr_ten.separation_rank, lsr_ten.order
     lambda1 = hypers["weight_decay"]
@@ -18,6 +18,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     lr        = hypers["learning_rate"]
     epochs    = hypers["epochs"]
     batch_size = hypers["batch_size"]
+    decay_factor = hypers["decay_factor"]
     b_intercept = intercept
 
     #Create models for each factor matrix and core matrix
@@ -40,9 +41,16 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     #Gradient Values
     gradient_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
 
+    #Epoch Level Function Values 
+    epoch_level_function_values = np.ones(shape = (max_iter,sep_rank,len(ranks)+1,epochs))*np.inf
+
     #Epoch Level Gradients
     epoch_gradient_values = np.ones(shape = (max_iter,sep_rank,len(ranks)+1,epochs))*np.inf
-    
+
+    #saving the tensor
+    tensor_iteration = []
+    #saving iterate-wise data
+    factor_core_iterates = []
 
     #iterate differences 
     iterate_difference = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
@@ -69,12 +77,13 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
                 
 
                 #Solve the sub-problem pertaining to the factor tensor
-                hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': batch_size, 'bias': b_intercept}
-                weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers , optimizer_code = 0, p_star = 0)
+                hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': batch_size, 'bias': b_intercept, 'decay_factor': decay_factor}
+                weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers , optimizer_code = 2, p_star = 0)
                 
                 #printing the subproblem gradients
                 print(f"Final gradient of the subproblem {s,k} : {sub_problem_gradient[-1]}")
                 epoch_gradient_values[iteration,s,k,:] = sub_problem_gradient
+                epoch_level_function_values[iteration,s,k,:] = loss_values
 
                 #Retrieve Original and Updated Factor Matrices
                 Bk = lsr_ten.get_factor_matrix(s, k)
@@ -123,11 +132,12 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         X_tilde, y_tilde = lsr_ten.bcd_core_update_x_y(X, y)
 
         #Solve the sub-problem pertaining to the core tensor
-        hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': 64, 'bias': intercept}
-        weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, optimizer_code = 0, p_star = 0)
+        hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': 64, 'bias': intercept, 'decay_factor':decay_factor}
+        weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, optimizer_code = 2, p_star = 0)
 
         print(f"Final gradient of the subproblem Core : {sub_problem_gradient[-1]}")
         epoch_gradient_values[iteration,:,len(ranks),:] = sub_problem_gradient
+        epoch_level_function_values[iteration,:,len(ranks),:] = loss_values
 
         #Get Original and Updated Core Tensor
         Gk = lsr_ten.get_core_matrix()
@@ -154,8 +164,12 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         expanded_lsr = lsr_ten.expand_to_tensor()
         expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
 
+        #saving the lsr tensor 
+        tensor_iteration.append(expanded_lsr)
+
         objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1, b if intercept else None)
         objective_function_values[iteration, :, (len(ranks))] = objective_function_value
+        
         #print('')
         #Print Objective Function Value
         # print(f"BCD Regression, Iteration: {iteration}, Core Tensor, Objective Function Value: {objective_function_value}")
@@ -169,6 +183,9 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         #Store Gradient Value
         gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
 
+        #storing lsr_ten
+        factor_core_iterates.append(lsr_ten)
+
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this
         # print('------------------------------------------------------------------------------------------')
@@ -178,4 +195,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values, gradient_values,iterate_difference,epoch_gradient_values
+    return lsr_ten, objective_function_values, gradient_values,iterate_difference,epoch_gradient_values,epoch_level_function_values,tensor_iteration,factor_core_iterates
