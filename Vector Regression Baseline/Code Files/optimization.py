@@ -168,8 +168,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         loss.backward()
         
         #Store Fixed Point Full Gradient Norm
-        fixed_point_full_gradients.append(cost_function.linear.weight.grad)
-        fixed_point_full_gradient_norms.append(torch.norm(cost_function.linear.weight.grad))
+        fixed_point_full_gradient = cost_function.linear.weight.grad.clone().detach()
+        fixed_point_full_gradients.append(fixed_point_full_gradient)
+        fixed_point_full_gradient_norms.append(torch.norm(fixed_point_full_gradient))
         
         #Analysis to compute Fixed Point Stochastic Gradient norms
         for X_sample, Y_sample in dataloader:
@@ -183,8 +184,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
             stochastic_loss.backward()
             
             #Store Fixed Point Gradient Norm
-            fixed_point_stochastic_gradients.append(cost_function.linear.weight.grad)
-            fixed_point_stochastic_gradient_norms.append(torch.norm(cost_function.linear.weight.grad))
+            fixed_point_stochastic_gradient = cost_function.linear.weight.grad.clone().detach()
+            fixed_point_stochastic_gradients.append(fixed_point_stochastic_gradient)
+            fixed_point_stochastic_gradient_norms.append(torch.norm(fixed_point_stochastic_gradient))
             
         #Store Entire Gradient Norm
         ## Compute loss
@@ -197,8 +199,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         loss.backward()
         
         ## Store Gradient Norm
-        full_gradients.append(cost_function.linear.weight.grad)
-        full_gradient_norms.append(torch.norm(cost_function.linear.weight.grad))
+        full_gradient = cost_function.linear.weight.grad.clone().detach()
+        full_gradients.append(full_gradient)
+        full_gradient_norms.append(torch.norm(full_gradient))
         
         #Perform Stochastic Updates
         for X_sample, Y_sample in dataloader:        
@@ -212,8 +215,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
             stochastic_loss.backward()
             
             #Store Stochastic Gradient Norm
-            stochastic_gradients.append(cost_function.linear.weight.grad)
-            stochastic_gradient_norms.append(torch.norm(cost_function.linear.weight.grad))
+            stochastic_gradient = cost_function.linear.weight.grad.clone().detach()
+            stochastic_gradients.append(stochastic_gradient)
+            stochastic_gradient_norms.append(torch.norm(stochastic_gradient))
 
             # Update parameters
             optimizer.step()
@@ -223,8 +227,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
             bias = cost_function.linear.bias.item() if uses_bias else 0
             
             #Store Iterate Norm
-            iterates.append(weights)
-            iterate_norms.append(np.linalg.norm(weights))
+            iterate = cost_function.linear.weight.data.clone().detach()
+            iterates.append(iterate)
+            iterate_norms.append(torch.norm(iterate))
                     
         #Print and Store Batch Loss values
         loss = cost_function.evaluate(X_tensor, Y_tensor, 'sum')
