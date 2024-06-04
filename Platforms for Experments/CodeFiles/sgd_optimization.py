@@ -213,9 +213,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
 
     #return weights and bias and loss metrics
     if uses_bias:
-        return weights, cost_function.linear.bias.item(), loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient
+        return weights, cost_function.linear.bias.item(), loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values
     else:
-        return weights, 0, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient
+        return weights, 0, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values
     
 
 #Optimize a Cost Function via Gradient Descent with Exact Line Search
