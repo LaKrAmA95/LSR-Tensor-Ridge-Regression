@@ -157,6 +157,9 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
     for epoch in range(epochs):
         epochs_ran += 1
         
+        #Compute number of stochastic steps
+        stochastic_steps = 0
+        
         #Analysis to Compute Fixed Point Full Gradient Norms
         #Compute Full Loss
         loss = cost_function.evaluate(X_tensor, Y_tensor, 'sum')
@@ -221,6 +224,7 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
 
             # Update parameters
             optimizer.step()
+            stochastic_steps += 1
             
             #Get Weights and Bias
             weights = cost_function.linear.weight.data.numpy().reshape((-1, 1))
@@ -261,6 +265,22 @@ def SGD(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, optim
         #If Stopping Criteria has been satisifed, break
         if torch.norm(cost_function.linear.weight.grad) <= 1:
             break
+        
+        #If norm of difference in iterates is small enough, then break
+        try:
+            print(f"Iterate Norm Difference: {torch.norm(iterates[-1] - iterates[-1 - stochastic_steps])}")
+            if torch.norm(iterates[-1] - iterates[-1 - stochastic_steps]) <= 1e-4:
+                break
+        except:
+            pass
+        
+        #If difference in loss is small enough, then break
+        try:
+            print(f"Function Value Difference: {np.abs(loss_values[-1] - loss_values[-2])}")
+            if np.abs(loss_values[-1] - loss_values[-2]) <= 1e-4:
+                break
+        except:
+            pass
         
     #Convert everything to numpy array
     loss_values = np.array(loss_values)
