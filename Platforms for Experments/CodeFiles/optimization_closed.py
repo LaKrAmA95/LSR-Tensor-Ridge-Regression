@@ -45,9 +45,9 @@ def objective_function_tensor_sep(y: np.ndarray, X: np.ndarray, B: np.ndarray,ls
 
     if b is not None:
       b = b.flatten()
-      function = (np.linalg.norm(y - I -b) ** 2) + (alpha * (np.linalg.norm(B) ** 2))
+      function = (np.linalg.norm(y - I -b) ** 2) + (alpha * regularizer)
     else:
-      function = (np.linalg.norm(y - I) ** 2) + (alpha * (np.linalg.norm(B) ** 2))
+      function = (np.linalg.norm(y - I) ** 2) + (alpha * regularizer)
     return function
 
 

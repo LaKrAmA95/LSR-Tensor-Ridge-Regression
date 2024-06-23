@@ -31,22 +31,21 @@ def objective_function_tensor_sep(y: np.ndarray, X: np.ndarray, B: np.ndarray,ls
     y = y.flatten()
     B = B.flatten()
     regularizer = 0
-    print('Separable Function')
+
     #developing the separable regularizing term
    
-    separation = len(lsr_ten.factor_matrices)
+    separation = len(lsr_ten.factor_matrices) 
     tucker = len(lsr_ten.factor_matrices[0])
     
     for s in range(separation):
        for k in range(tucker):
           regularizer += (np.linalg.norm(lsr_ten.factor_matrices[s][k])**2)
     regularizer = regularizer + (np.linalg.norm(lsr_ten.core_tensor)**2)
-
     if b is not None:
       b = b.flatten()
-      function = (np.linalg.norm(y - I -b) ** 2) + (alpha * (np.linalg.norm(B) ** 2))
+      function = (np.linalg.norm(y - I -b) ** 2) + (alpha * regularizer)
     else:
-      function = (np.linalg.norm(y - I) ** 2) + (alpha * (np.linalg.norm(B) ** 2))
+      function = (np.linalg.norm(y - I) ** 2) + (alpha * regularizer)
     return function
 
 #Calculate x* and p* for Objective Function(Tensor Case)

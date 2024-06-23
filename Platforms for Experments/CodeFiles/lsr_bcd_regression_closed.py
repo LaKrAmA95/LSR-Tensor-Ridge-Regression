@@ -3,6 +3,7 @@ import LSR_Tensor_2D_v1
 import numpy as np
 from optimization_closed import objective_function_tensor_sep
 from sklearn.linear_model import SGDRegressor
+import copy
 
 #lsr_ten: LSR Tensor
 #training_data: X
@@ -32,6 +33,12 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
     #Normalized Estimation Error
     iterations_normalized_estimation_error = np.zeros(shape = (max_iter,))
+
+    #iterate level tensor
+    tensor_iteration = []
+
+    #iterate level core and factors
+    factor_core_iteration = []
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
@@ -115,6 +122,11 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
         objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1, b if intercept else None)
         objective_function_values[iteration, :, (len(ranks))] = objective_function_value
+
+        #tensor iteration saving 
+        tensor_iteration.append(expanded_lsr)
+        #saving lsr_ten
+        factor_core_iteration.append(copy.deepcopy(lsr_ten))
         
         
         #Print Objective Function Value
@@ -129,4 +141,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values
+    return lsr_ten, objective_function_values,tensor_iteration,factor_core_iteration

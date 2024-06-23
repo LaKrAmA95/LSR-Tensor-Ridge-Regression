@@ -4,6 +4,7 @@ import numpy as np
 from optimization import objective_function_tensor_sep
 from sklearn.linear_model import SGDRegressor
 from sgd_optimization import SGD
+import copy
 
 #lsr_ten: LSR Tensor
 #training_data: X
@@ -78,7 +79,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
                 #Solve the sub-problem pertaining to the factor tensor
                 hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': batch_size, 'bias': b_intercept, 'decay_factor': decay_factor}
-                weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers , optimizer_code = 2, p_star = 0)
+                weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers , optimizer_code = 0, p_star = 0)
                 
                 #printing the subproblem gradients
                 print(f"Final gradient of the subproblem {s,k} : {sub_problem_gradient[-1]}")
@@ -133,7 +134,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
         #Solve the sub-problem pertaining to the core tensor
         hypers = {'lambda': lambda1, 'lr': lr, 'epochs': epochs, 'batch_size': 64, 'bias': intercept, 'decay_factor':decay_factor}
-        weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, optimizer_code = 2, p_star = 0)
+        weights, bias, loss_values, gap_to_optimality, nmse_values, corr_values, R2_values,sub_problem_gradient,loss_values = SGD(X_tilde, y_tilde.reshape(-1,1), cost_function_code = 1, hypers = hypers, optimizer_code = 0, p_star = 0)
 
         print(f"Final gradient of the subproblem Core : {sub_problem_gradient[-1]}")
         epoch_gradient_values[iteration,:,len(ranks),:] = sub_problem_gradient
@@ -184,7 +185,7 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
 
         #storing lsr_ten
-        factor_core_iterates.append(lsr_ten)
+        factor_core_iterates.append(copy.deepcopy(lsr_ten))
 
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this

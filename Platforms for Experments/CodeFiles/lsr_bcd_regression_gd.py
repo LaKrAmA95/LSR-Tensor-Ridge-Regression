@@ -4,6 +4,7 @@ import numpy as np
 from optimization import objective_function_tensor_sep
 from sklearn.linear_model import SGDRegressor
 from sgd_optimization import GD2
+import copy
 
 #lsr_ten: LSR Tensor
 #training_data: X
@@ -39,6 +40,12 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     
     #Gradient Values
     gradient_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
+
+    #tesnsor_iterate
+    tensor_iterate = []
+
+    #factor_core_iterate
+    factor_core_iterate = []
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
@@ -148,6 +155,10 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         #Store Gradient Value
         gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
 
+        #saving the reconstructed tensor
+        tensor_iterate.append(expanded_lsr)
+        factor_core_iterate.append(copy.deepcopy(lsr_ten))
+
         #Stopping Criteria
         diff = np.sum(factor_residuals.flatten()) + core_residual  #need to change this
         # print('------------------------------------------------------------------------------------------')
@@ -157,4 +168,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values, gradient_values
+    return lsr_ten, objective_function_values, gradient_values,tensor_iterate,factor_core_iterate

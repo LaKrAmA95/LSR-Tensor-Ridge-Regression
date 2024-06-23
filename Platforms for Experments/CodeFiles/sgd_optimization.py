@@ -310,7 +310,7 @@ def GD2(X: np.ndarray, Y: np.ndarray, cost_function_code = 1, hypers = {}, p_sta
         for name, param in cost_function.named_parameters():
             if param.grad is not None:
                 print(f"Gradient Norm for {name}: {torch.norm(param.grad)}")
-                criteria_satisfied = criteria_satisfied and (torch.norm(param.grad) <= 1)
+                criteria_satisfied = criteria_satisfied and (torch.norm(param.grad) <= 0.001)
             else:
                 print(f"No gradient Norm for {name}")
         
