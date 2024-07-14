@@ -73,7 +73,7 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray, alphas, k_folds, hypers, B
 
         except Exception as e:
             # Handle the error and continue with the next lambda value
-            print(f"Fold:{fold} = {fold} Lambda {lambda1}: Error occurred during cross-validation: {e}")
+            print(f"Fold:{fold} = {fold} Lambda {alpha1}: Error occurred during cross-validation: {e}")
             continue
   
   #Average out validation results

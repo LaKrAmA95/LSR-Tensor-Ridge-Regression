@@ -9,7 +9,7 @@ import copy
 #training_data: X
 #training_labels: Y
 #hypers: hyperparameters
-def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.ndarray, hypers: dict, intercept = False):
+def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.ndarray, hypers: dict,iter,tol, intercept = False):
     #Get LSR Tensor Information and other hyperparameters
     shape, ranks, sep_rank, order = lsr_ten.shape, lsr_ten.ranks, lsr_ten.separation_rank, lsr_ten.order
     lambda1 = hypers["weight_decay"]
@@ -18,8 +18,8 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
     b_intercept = intercept
 
     #Create models for each factor matrix and core matrix
-    factor_matrix_models = [[Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept) for k in range(len(ranks))] for s in range(sep_rank)]
-    core_tensor_model = Ridge(alpha = lambda1, solver = 'svd', fit_intercept = intercept)
+    factor_matrix_models = [[Ridge(alpha = lambda1, solver = 'sparse_cg', fit_intercept = intercept,max_iter = iter[0], tol= tol[0] ) for k in range(len(ranks))] for s in range(sep_rank)]
+    core_tensor_model = Ridge(alpha = lambda1, solver = 'sparse_cg', fit_intercept = intercept,max_iter = iter[1], tol= tol[1])
 
     #Store objective function values
     objective_function_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
@@ -39,11 +39,17 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
     #iterate level core and factors
     factor_core_iteration = []
+    
+    #Gradient Values
+    gradient_values = np.ones(shape = (max_iter, sep_rank, len(ranks) + 1)) * np.inf
 
     #Run at most max_iter iterations of Block Coordinate Descent
     for iteration in range(max_iter):
         factor_residuals = np.zeros(shape = (sep_rank, len(ranks)))
         core_residual = 0
+        
+        #dummy 
+        bias = 0
 
         #Store updates to factor matrices and core tensor
         updated_factor_matrices = np.empty((sep_rank, len(ranks)), dtype=object)
@@ -87,6 +93,15 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
                 expanded_lsr = np.reshape(expanded_lsr, X[0].shape, order = 'F')
                 objective_function_value = objective_function_tensor_sep(y, X, expanded_lsr,lsr_ten, lambda1, b if intercept else None)# CHECK THISSSS______________________________
                 objective_function_values[iteration, s, k] = objective_function_value
+                
+                                #Calculate Gradient Values
+                bk = np.reshape(Bk, (-1, 1), order = 'F') #Flatten Factor Matrix Column Wise
+                Omega = X_tilde
+                z = bias
+                gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ bk  - z) + (2 * lambda1 * bk)
+                
+                #Store Gradient Values
+                gradient_values[iteration, s, k] = np.linalg.norm(gradient_value, ord = 'fro')
 
                 #Print Objective Function Values
                 # print(f"Iteration: {iteration}, Separation Rank: {s}, Factor Matrix: {k}, Objective Function Value: {objective_function_value}")
@@ -125,6 +140,15 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
 
         #tensor iteration saving 
         tensor_iteration.append(expanded_lsr)
+        
+        #Calculate Gradient Values
+        g = np.reshape(Gk1, (-1, 1), order = 'F') #Flatten Core Matrix Column Wise
+        Omega = X_tilde
+        z = bias
+        gradient_value = (-2 * Omega.T) @ (y_tilde.reshape(-1,1) - Omega @ g  - z) + (2 * lambda1 * g)
+        
+        #Store Gradient Value
+        gradient_values[iteration, :, (len(ranks))] = np.linalg.norm(gradient_value, ord='fro')
         #saving lsr_ten
         factor_core_iteration.append(copy.deepcopy(lsr_ten))
         
@@ -141,4 +165,4 @@ def lsr_bcd_regression(lsr_ten, training_data: np.ndarray, training_labels: np.n
         if diff < threshold: break
 
 
-    return lsr_ten, objective_function_values,tensor_iteration,factor_core_iteration
+    return lsr_ten, objective_function_values,tensor_iteration,factor_core_iteration,gradient_values
