@@ -12,10 +12,10 @@ def KFoldCV(X_train: np.ndarray, Y_train: np.ndarray, alphas, k_folds, hypers, B
 
   #Matrix storing Validation Results
   if B_tensored is not None:
-    validation_normalized_estimation_error = np.zeros(shape = (k_folds, len(alphas)))
-  validation_nmse_losses = np.zeros(shape = (k_folds, len(alphas)))
-  validation_correlations = np.zeros(shape = (k_folds, len(alphas)))
-  validation_R2_scores = np.zeros(shape = (k_folds, len(alphas)))
+    validation_normalized_estimation_error = np.ones(shape = (k_folds, len(alphas))) * np.inf
+  validation_nmse_losses = np.ones(shape = (k_folds, len(alphas)))* np.inf
+  validation_correlations = np.ones(shape = (k_folds, len(alphas)))* np.inf
+  validation_R2_scores = np.ones(shape = (k_folds, len(alphas)))* np.inf
 
   #Define LSR Tensor Hyperparameters
   ranks = hypers['ranks']
