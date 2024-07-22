@@ -24,7 +24,7 @@ def train_test(X_train: np.ndarray, Y_train: np.ndarray, X_test: np.ndarray, Y_t
 
   
   #Training 
-  Y_train_predicted = inner_product(np.transpose(X_train, (0, 2, 1)), expanded_lsr.flatten(order ='F')) + lsr_tensor.b + Y_train_mean
+  Y_train_predicted = inner_product(np.transpose(X_train, (0, 2, 1)), expanded_lsr.flatten(order ='F')) + lsr_tensor.b
       
   train_nmse_loss = np.sum(np.square((Y_train_predicted.flatten() - Y_train.flatten()))) / np.sum(np.square(Y_train.flatten()))
   train_R2_loss = R2(Y_train.flatten(), Y_train_predicted.flatten())
